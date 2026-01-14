@@ -1,0 +1,448 @@
+{
+    "filters": {
+        "Gaming": {
+            "ASUS": [
+                {
+                    "name": "ASUS ROG Strix G15",
+                    "price": 1499.00,
+                    "originalPrice": 1799.00,
+                    "discount": "17%",
+                    "image": "ASUSROGStrixG15.jpg",
+                    "description": "Dominate every game with the ROG Strix G15. Powered by AMD Ryzen 9, RTX 4070, 360Hz display, and ROG Intelligent Cooling with liquid metal. RGB keyboard and Aura Sync for ultimate gaming immersion.",
+                    "specs": [
+                        "16GB RAM",
+                        "1TB SSD",
+                        "RTX Graphics"
+                    ]
+                },
+                {
+                    "name": "ASUS TUF Gaming A15",
+                    "price": 1299.00,
+                    "originalPrice": 1599.00,
+                    "discount": "19%",
+                    "image": "ASUSTUFGamingA15.jpg",
+                    "description": "Built to last. Military-grade durability, AMD Ryzen 7, RTX 3060, self-cleaning cooling, and desktop-style keyboard. Perfect for gamers who demand toughness without compromise.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD",
+                        "RTX Graphics",
+                        "AMD Ryzen"
+                    ]
+                }
+            ],
+            "MSI": [
+                {
+                    "name": "MSI GF63 Thin",
+                    "price": 999.00,
+                    "originalPrice": 1299.00,
+                    "discount": "23%",
+                    "image": "MSIGF63Thin.jpg",
+                    "description": "Lightweight gaming beast. Slim design with RTX 3050 Ti, 144Hz display, Cooler Boost 5, and Hi-Res Audio. Ideal for students and casual gamers on the go.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD",
+                        "RTX Graphics"
+                    ]
+                }
+            ],
+            "Razer": [
+                {
+                    "name": "Razer Blade 15",
+                    "price": 1899.00,
+                    "originalPrice": 2199.00,
+                    "discount": "14%",
+                    "image": "RazerBlade15.jpg",
+                    "description": "The thinnest, most powerful 15-inch gaming laptop. CNC aluminum unibody, RTX 4080, 240Hz OLED display, Chroma RGB per-key lighting. Pure gaming luxury.",
+                    "specs": [
+                        "32GB RAM",
+                        "1TB SSD",
+                        "RTX Graphics"
+                    ]
+                }
+            ],
+            "Acer": [
+                {
+                    "name": "Acer Predator Helios 300",
+                    "price": 1599.00,
+                    "originalPrice": 1899.00,
+                    "discount": "16%",
+                    "image": "AcerPredatorHelios300.jpg",
+                    "description": "Unleash the predator within. 12th Gen Intel i7, RTX 3070 Ti, 165Hz display, 5th Gen AeroBlade 3D Fan Technology. Built for victory.",
+                    "specs": [
+                        "16GB RAM",
+                        "1TB SSD",
+                        "RTX Graphics",
+                        "Intel i7"
+                    ]
+                }
+            ],
+            "Dell": [
+                {
+                    "name": "Dell Alienware m15",
+                    "price": 1999.00,
+                    "originalPrice": 2399.00,
+                    "discount": "17%",
+                    "image": "DellAlienwarem15.jpg",
+                    "description": "Legendary Alienware performance. Cryo-Tech cooling, RTX 4080, 360Hz display, Cherry MX keyboard option. For those who refuse to compromise.",
+                    "specs": [
+                        "32GB RAM",
+                        "1TB SSD",
+                        "RTX Graphics",
+                        "Intel i7"
+                    ]
+                }
+            ],
+            "Lenovo": [
+                {
+                    "name": "Lenovo Legion 5",
+                    "price": 1399.00,
+                    "originalPrice": 1699.00,
+                    "discount": "18%",
+                    "image": "LenovoLegion5.jpg",
+                    "description": "Coldfront 3.0 cooling, AMD Ryzen 7, RTX 3060, 165Hz display with 100% sRGB. Legion TrueStrike keyboard with 4-zone RGB. Pure gaming DNA.",
+                    "specs": [
+                        "16GB RAM",
+                        "1TB SSD",
+                        "RTX Graphics",
+                        "AMD Ryzen"
+                    ]
+                }
+            ],
+            "HP": [
+                {
+                    "name": "HP Omen 16",
+                    "price": 1699.00,
+                    "originalPrice": 1999.00,
+                    "discount": "15%",
+                    "image": "HPOmen16.jpg",
+                    "description": "OMEN Tempest Cooling, Intel i9, RTX 4080, 240Hz QHD display. Expandable RAM & storage. Designed for esports champions.",
+                    "specs": [
+                        "32GB RAM",
+                        "1TB SSD",
+                        "RTX Graphics",
+                        "Intel i7"
+                    ]
+                }
+            ]
+        },
+        "Business": {
+            "Dell": [
+                {
+                    "name": "Dell XPS 15",
+                    "price": 1599.00,
+                    "originalPrice": 1899.00,
+                    "discount": "16%",
+                    "image": "DellXPS15.jpg",
+                    "description": "InfinityEdge 4K OLED touch display, 12th Gen Intel i7, carbon fiber palm rest, Thunderbolt 4. The ultimate creator and professional laptop.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD",
+                        "Intel i7"
+                    ]
+                },
+                {
+                    "name": "Dell Latitude 5420",
+                    "price": 1299.00,
+                    "originalPrice": 1499.00,
+                    "discount": "13%",
+                    "image": "DellLatitude5420.jpg",
+                    "description": "Business-class security with ExpressSign-in, Intel vPro, privacy shutter, carbon fiber chassis. Built for the modern workplace.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD",
+                        "Intel i7"
+                    ]
+                }
+            ],
+            "HP": [
+                {
+                    "name": "HP Spectre x360",
+                    "price": 1399.00,
+                    "originalPrice": 1699.00,
+                    "discount": "18%",
+                    "image": "HPSpectrex360.jpg",
+                    "description": "Gem-cut 2-in-1 design, 4K OLED display, Intel Evo platform, Bang & Olufsen audio, HP Tilt Pen included. Luxury meets productivity.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD"
+                    ]
+                }
+            ],
+            "Lenovo": [
+                {
+                    "name": "Lenovo ThinkPad X1",
+                    "price": 1799.00,
+                    "originalPrice": 2099.00,
+                    "discount": "14%",
+                    "image": "LenovoThinkPadX1.jpg",
+                    "description": "The legendary ThinkPad keyboard, MIL-STD-810H durability, Intel vPro, PrivacyGuard display. Trusted by professionals worldwide.",
+                    "specs": [
+                        "16GB RAM",
+                        "1TB SSD",
+                        "Intel i7"
+                    ]
+                }
+            ],
+            "ASUS": [
+                {
+                    "name": "ASUS ZenBook 14",
+                    "price": 1299.00,
+                    "originalPrice": 1499.00,
+                    "discount": "13%",
+                    "image": "ASUSZenBook14.jpg",
+                    "description": "ScreenPad 2.0, ErgoLift hinge, NumberPad, Harman Kardon audio. Ultra-slim, ultra-light, ultra-powerful.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD",
+                        "Intel i7"
+                    ]
+                }
+            ],
+            "LG": [
+                {
+                    "name": "LG Gram 17",
+                    "price": 1499.00,
+                    "originalPrice": 1799.00,
+                    "discount": "17%",
+                    "image": "LGGram17.jpg",
+                    "description": "World's lightest 17-inch laptop. 17-hour battery, Intel Evo, Thunderbolt 4, magnesium alloy body. Featherlight performance.",
+                    "specs": [
+                        "16GB RAM",
+                        "1TB SSD",
+                        "Intel i7"
+                    ]
+                }
+            ],
+            "Samsung": [
+                {
+                    "name": "Samsung Galaxy Book3",
+                    "price": 1199.00,
+                    "originalPrice": 1399.00,
+                    "discount": "14%",
+                    "image": "SamsungGalaxyBook3.jpg",
+                    "description": "AMOLED display, S Pen support, Intel 13th Gen, seamless Galaxy ecosystem integration. Your PC, evolved.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD"
+                    ]
+                }
+            ],
+            "Razer": [
+                {
+                    "name": "Razer Book 13",
+                    "price": 1399.00,
+                    "originalPrice": 1699.00,
+                    "discount": "18%",
+                    "image": "RazerBook13.jpg",
+                    "description": "Productivity meets Razer style. 13.4-inch 120Hz display, Intel Evo, Chroma RGB keyboard, Thunderbolt 4. Work hard, look good.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD",
+                        "Intel i7"
+                    ]
+                }
+            ]
+        },
+        "Student": {
+            "Microsoft": [
+                {
+                    "name": "Microsoft Surface Laptop 5",
+                    "price": 1299.00,
+                    "originalPrice": 1499.00,
+                    "discount": "13%",
+                    "image": "MicrosoftSurfaceLaptop5.jpg",
+                    "description": "Premium Alcantara or metal finish, PixelSense touchscreen, all-day battery, Windows Hello. The perfect balance of elegance and performance.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD"
+                    ]
+                },
+                {
+                    "name": "Microsoft Surface Pro 9",
+                    "price": 1199.00,
+                    "originalPrice": 1399.00,
+                    "discount": "14%",
+                    "image": "MicrosoftSurfacePro9.jpg",
+                    "description": "2-in-1 versatility, 120Hz PixelSense Flow display, Intel 12th Gen, detachable keyboard. From laptop to tablet in seconds.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD"
+                    ]
+                }
+            ],
+            "Acer": [
+                {
+                    "name": "Acer Swift 3",
+                    "price": 899.00,
+                    "originalPrice": 1099.00,
+                    "discount": "18%",
+                    "image": "AcerSwift3.jpg",
+                    "description": "All-metal chassis, AMD Ryzen 7, 14-hour battery, fingerprint reader. Lightweight powerhouse for students on the move.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD"
+                    ]
+                },
+                {
+                    "name": "Acer Chromebook Spin 713",
+                    "price": 699.00,
+                    "originalPrice": 899.00,
+                    "discount": "22%",
+                    "image": "AcerChromebookSpin713.jpg",
+                    "description": "360° convertible Chromebook, 2K display, MIL-STD durability, stylus support. Perfect for Google Classroom and GSuite users.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD"
+                    ]
+                }
+            ],
+            "Apple": [
+                {
+                    "name": "MacBook Air M2",
+                    "price": 1499.00,
+                    "originalPrice": 1699.00,
+                    "discount": "12%",
+                    "image": "MacBookAirM2.jpg",
+                    "description": "Redesigned with M2 chip, Liquid Retina display, MagSafe charging, all-day battery. The ultimate student MacBook.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD"
+                    ]
+                }
+            ],
+            "Dell": [
+                {
+                    "name": "Dell Inspiron 15",
+                    "price": 799.00,
+                    "originalPrice": 999.00,
+                    "discount": "20%",
+                    "image": "DellInspiron15.jpg",
+                    "description": "Perfect for schoolwork and entertainment. 15.6-inch FHD display, Intel i5, Waves MaxxAudio, long battery life.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD"
+                    ]
+                }
+            ],
+            "HP": [
+                {
+                    "name": "HP Pavilion 14",
+                    "price": 749.00,
+                    "originalPrice": 949.00,
+                    "discount": "21%",
+                    "image": "HPPavilion14.jpg",
+                    "description": "B&O audio, micro-edge display, fast charging (50% in 45 mins), fingerprint reader. Your daily driver for studies and streaming.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD"
+                    ]
+                }
+            ],
+            "Lenovo": [
+                {
+                    "name": "Lenovo IdeaPad 5",
+                    "price": 899.00,
+                    "originalPrice": 1099.00,
+                    "discount": "18%",
+                    "image": "LenovoIdeaPad5.jpg",
+                    "description": "AMD Ryzen 7, privacy shutter, Alexa built-in, rapid charge. Smart features for smart students.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD",
+                        "AMD Ryzen"
+                    ]
+                }
+            ],
+            "LG": [
+                {
+                    "name": "LG Ultra PC 15",
+                    "price": 999.00,
+                    "originalPrice": 1199.00,
+                    "discount": "16%",
+                    "image": "LGUltraPC15.jpg",
+                    "description": "Ultra-light at just 1.1kg, 15.6-inch display, Intel 13th Gen, Thunderbolt 4. Carry your power anywhere.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD"
+                    ]
+                }
+            ],
+            "ASUS": [
+                {
+                    "name": "ASUS VivoBook 15",
+                    "price": 899.00,
+                    "originalPrice": 1099.00,
+                    "discount": "18%",
+                    "image": "ASUSVivoBook15.jpg",
+                    "description": "ErgoLift hinge, fingerprint sensor, NanoEdge display, Harman Kardon audio. Comfortable typing, immersive viewing.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD"
+                    ]
+                }
+            ]
+        },
+        "Creative": {
+            "Apple": [
+                {
+                    "name": "MacBook Pro M3",
+                    "price": 2299.00,
+                    "originalPrice": 2599.00,
+                    "discount": "11%",
+                    "image": "MacBookProM3.jpg",
+                    "description": "M3 Pro/Max chip, XDR display with 1600 nits, up to 96GB unified memory. The ultimate tool for video editors, 3D artists, and developers.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD"
+                    ]
+                }
+            ],
+            "HP": [
+                {
+                    "name": "HP Envy 13",
+                    "price": 1299.00,
+                    "originalPrice": 1599.00,
+                    "discount": "19%",
+                    "image": "HPEnvy13.jpg",
+                    "description": "4K OLED option, NVIDIA MX450, color-calibrated display, Bang & Olufsen audio. Made for photographers and video editors.",
+                    "specs": [
+                        "16GB RAM",
+                        "512GB SSD",
+                        "Intel i7"
+                    ]
+                }
+            ],
+            "MSI": [
+                {
+                    "name": "MSI Creator Z16",
+                    "price": 2499.00,
+                    "originalPrice": 2799.00,
+                    "discount": "10%",
+                    "image": "MSICreatorZ16.jpg",
+                    "description": "16:10 Golden Ratio display, RTX 3060, Calman verified color accuracy, Thunderbolt 4. Built for creators who demand perfection.",
+                    "specs": [
+                        "32GB RAM",
+                        "1TB SSD",
+                        "RTX Graphics",
+                        "Intel i7"
+                    ]
+                }
+            ],
+            "Lenovo": [
+                {
+                    "name": "Lenovo Yoga 9i",
+                    "price": 1799.00,
+                    "originalPrice": 2099.00,
+                    "discount": "14%",
+                    "image": "LenovoYoga9i.jpg",
+                    "description": "Rotating soundbar hinge, Dolby Atmos, 4K OLED option, active pen support. The ultimate 2-in-1 for digital artists.",
+                    "specs": [
+                        "16GB RAM",
+                        "1TB SSD",
+                        "Intel i7"
+                    ]
+                }
+            ]
+        }
+    }
+}
