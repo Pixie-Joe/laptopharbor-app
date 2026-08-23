@@ -1,7 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_stripe/flutter_stripe.dart';
 import '../backend/storage/cart_manager.dart';
 import 'notifications_screen.dart';
 import '../backend/models/notification.dart' as model_notif;
+import '../backend/db/db_helper.dart';
+import '../backend/services/payment_service.dart';
 
 final cartManager = CartManager();
 
@@ -73,6 +78,49 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ],
       ),
     );
+  }
+
+  // Attempts to charge via the local Stripe backend and present the native PaymentSheet.
+  // Returns true when the payment completed successfully. Returns false when Stripe is
+  // not configured or when an error occurred - the caller should fall back to the stub.
+  Future<bool> _processStripePayment(double amount) async {
+    try {
+      final publishableKey = Stripe.publishableKey;
+      if (publishableKey == null || publishableKey.isEmpty) {
+        // Stripe not configured; let the caller fall back to the stubbed flow.
+        return false;
+      }
+
+      // Backend expects amount in cents
+      final url = Uri.parse('http://10.0.2.2:4242/create-payment-intent');
+      final resp = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'amount': (amount * 100).toInt(), 'currency': 'usd'}),
+      );
+
+      if (resp.statusCode != 200) {
+        print('PaymentIntent creation failed: ${resp.statusCode} ${resp.body}');
+        return false;
+      }
+
+      final body = jsonDecode(resp.body) as Map<String, dynamic>;
+      final clientSecret = body['clientSecret'] as String?;
+      if (clientSecret == null) return false;
+
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: clientSecret,
+          merchantDisplayName: 'LaptopHarbor (Test)',
+        ),
+      );
+
+      await Stripe.instance.presentPaymentSheet();
+      return true;
+    } catch (e) {
+      print('Stripe payment error: $e');
+      return false;
+    }
   }
 
   @override
@@ -170,7 +218,55 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
+                        // First try the Stripe-native flow if configured.
+                        bool stripeSuccess = false;
+                        try {
+                          stripeSuccess = await _processStripePayment(total);
+                        } catch (e) {
+                          print('Stripe flow error: $e');
+                          stripeSuccess = false;
+                        }
+
+                        if (!stripeSuccess) {
+                          // Fall back to the existing PaymentService stub
+                          final paymentResult = await PaymentService()
+                              .processPayment(amount: total, method: updatedPayment);
+
+                          if (!paymentResult.success) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text('Payment failed: ${paymentResult.message}'),
+                              backgroundColor: Colors.red.shade400,
+                            ));
+                            return;
+                          }
+                        }
+
+                        // Persist order to DB
+                        try {
+                          final db = await DBHelper().db;
+                          final now = DateTime.now().toIso8601String();
+                          final orderId = await db.insert('orders', {
+                            'user_id': 0,
+                            'total_amount': total,
+                            'shipping_address': updatedAddress,
+                            'status': 'placed',
+                            'created_at': now,
+                          });
+
+                          // Insert order_items
+                          for (var item in cartItems) {
+                            await db.insert('order_items', {
+                              'order_id': orderId,
+                              'product_id': item.product.id,
+                              'quantity': item.quantity,
+                              'price': item.product.price,
+                            });
+                          }
+                        } catch (e) {
+                          print('Error persisting order: $e');
+                        }
+
                         // Create the notification
                         final notifications = [
                           model_notif.AppNotification(
@@ -178,14 +274,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             iconColor: Colors.white,
                             iconBg: const Color(0xFF00B4D8),
                             title: 'Order Placed!',
-                            subtitle:
-                                'Your order has been successfully placed.',
+                            subtitle: 'Your order has been successfully placed.',
                             time: 'Just now',
                           ),
                         ];
 
                         // Clear the cart
-                        CartManager().clearCart();
+                        await CartManager().clearCart();
 
                         // Navigate to NotificationsScreen
                         Navigator.pushReplacement(
