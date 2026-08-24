@@ -1,46 +1,18 @@
 // lib/backend/db/database.dart
 
-import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'db_helper.dart';
 import '../models/address.dart';
 
 class AppDatabase {
   static final AppDatabase instance = AppDatabase._internal();
-  static Database? _db;
 
   AppDatabase._internal();
 
+  final DBHelper _dbHelper = DBHelper();
+
   Future<Database> get database async {
-    if (_db != null) return _db!;
-    _db = await _initDB('app_database.db');
-    return _db!;
-  }
-
-  Future<Database> _initDB(String fileName) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, fileName);
-
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: _onCreate,
-    );
-  }
-
-  Future _onCreate(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE addresses (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        fullName TEXT NOT NULL,
-        street TEXT NOT NULL,
-        city TEXT NOT NULL,
-        state TEXT NOT NULL,
-        postalCode TEXT NOT NULL,
-        country TEXT NOT NULL,
-        isDefault INTEGER NOT NULL
-      )
-    ''');
+    return await _dbHelper.db;
   }
 
   // ---------------------------------------------

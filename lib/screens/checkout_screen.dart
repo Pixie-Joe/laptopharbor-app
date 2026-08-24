@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_stripe/flutter_stripe.dart';
@@ -86,7 +87,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Future<bool> _processStripePayment(double amount) async {
     try {
       final publishableKey = Stripe.publishableKey;
-      if (publishableKey == null || publishableKey.isEmpty) {
+      if (publishableKey.isEmpty) {
         // Stripe not configured; let the caller fall back to the stubbed flow.
         return false;
       }
@@ -100,7 +101,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
 
       if (resp.statusCode != 200) {
-        print('PaymentIntent creation failed: ${resp.statusCode} ${resp.body}');
+        debugPrint('PaymentIntent creation failed: ${resp.statusCode} ${resp.body}');
         return false;
       }
 
@@ -118,7 +119,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       await Stripe.instance.presentPaymentSheet();
       return true;
     } catch (e) {
-      print('Stripe payment error: $e');
+      debugPrint('Stripe payment error: $e');
       return false;
     }
   }
@@ -224,7 +225,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         try {
                           stripeSuccess = await _processStripePayment(total);
                         } catch (e) {
-                          print('Stripe flow error: $e');
+                          debugPrint('Stripe flow error: $e');
                           stripeSuccess = false;
                         }
 
@@ -264,7 +265,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             });
                           }
                         } catch (e) {
-                          print('Error persisting order: $e');
+                          debugPrint('Error persisting order: $e');
                         }
 
                         // Create the notification

@@ -1,5 +1,4 @@
 // lib/backend/db_helper.dart
-import 'dart:convert';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -20,7 +19,49 @@ class DBHelper {
     final docDir = await getApplicationDocumentsDirectory();
     final path = join(docDir.path, 'laptop_harbor.db');
 
-    return await openDatabase(path, version: 1, onCreate: _onCreate);
+    // Bump DB version to 3 to add sessions/password-reset and product_json persistence
+    return await openDatabase(
+      path,
+      version: 3,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+    );
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    // Handle migrations incrementally
+    if (oldVersion < 2) {
+      // Add sessions table
+      await db.execute('''
+        CREATE TABLE sessions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          token TEXT NOT NULL UNIQUE,
+          expires_at TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY(user_id) REFERENCES users(id)
+        );
+      ''');
+
+      // Add password reset columns if users table exists
+      // Note: SQLite allows adding columns with ALTER TABLE
+      try {
+        await db.execute('ALTER TABLE users ADD COLUMN password_reset_token TEXT;');
+        await db.execute('ALTER TABLE users ADD COLUMN password_reset_expiry TEXT;');
+      } catch (_) {
+        // If columns already exist or alteration fails, ignore during upgrade
+      }
+    }
+
+    if (oldVersion < 3) {
+      // Add product JSON persistence to cart_items and wishlist so we can reconstruct products
+      try {
+        await db.execute('ALTER TABLE cart_items ADD COLUMN product_json TEXT;');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE wishlist ADD COLUMN product_json TEXT;');
+      } catch (_) {}
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -30,9 +71,25 @@ class DBHelper {
         email TEXT UNIQUE NOT NULL,
         username TEXT,
         password_hash TEXT NOT NULL,
+        password_salt TEXT NOT NULL,
         display_name TEXT,
         phone TEXT,
         created_at TEXT NOT NULL
+      );
+    ''');
+
+    // Addresses table unified into central DB helper so all modules use the same schema
+    await db.execute('''
+      CREATE TABLE addresses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        fullName TEXT NOT NULL,
+        street TEXT NOT NULL,
+        city TEXT NOT NULL,
+        state TEXT NOT NULL,
+        postalCode TEXT NOT NULL,
+        country TEXT NOT NULL,
+        isDefault INTEGER NOT NULL
       );
     ''');
 

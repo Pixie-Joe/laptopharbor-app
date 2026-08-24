@@ -1,18 +1,23 @@
 // lib/screens/my_orders_screen.dart
 import 'package:flutter/material.dart';
 import '../backend/models/product.dart';
+import '../backend/services/order_service.dart';
 
 class Order {
+  final int id;
   final String orderId;
   final List<Product> items;
   final double total;
   String status; // Active, Completed, Cancelled
+  final String createdAt;
 
   Order({
+    required this.id,
     required this.orderId,
     required this.items,
     required this.total,
     required this.status,
+    required this.createdAt,
   });
 }
 
@@ -27,49 +32,42 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   List<Order> orders = [];
+  final OrderService _orderService = OrderService();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _generateDemoOrders();
+    _loadOrders();
   }
 
-  void markOrderAsCompleted(Order order) {
+  Future<void> _loadOrders() async {
+    final rows = await _orderService.getOrdersForUser(0); // guest user
     setState(() {
-      order.status = "Completed";
+      orders = rows
+          .map((r) => Order(id: r.id, orderId: r.orderIdText, items: r.items, total: r.total, status: r.status, createdAt: r.createdAt))
+          .toList();
     });
   }
 
-  void markOrderAsCancelled(Order order) {
-    setState(() {
-      order.status = "Cancelled";
-    });
+  void markOrderAsCompleted(Order order) async {
+    final ok = await _orderService.updateOrderStatus(order.id, 'Completed');
+    if (ok) {
+      setState(() {
+        order.status = 'Completed';
+      });
+    }
   }
 
-  void _generateDemoOrders() {
-    orders = [
-      Order(
-        orderId: "#12345",
-        items: [
-          Product(
-            id: 1,
-            name: "ASUS ROG Strix G15",
-            brand: "ASUS",
-            category: "Gaming",
-            price: 1499.0,
-            originalPrice: 1799.0,
-            discount: "17%",
-            specs: ["16GB RAM", "1TB SSD", "RTX Graphics"],
-            image: "ASUSROGStrixG15.jpg",
-            description: "Dominate every game...",
-          ),
-        ],
-        total: 1499.0,
-        status: "Active",
-      ),
-    ];
+  void markOrderAsCancelled(Order order) async {
+    final ok = await _orderService.updateOrderStatus(order.id, 'Cancelled');
+    if (ok) {
+      setState(() {
+        order.status = 'Cancelled';
+      });
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +147,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
               )
             ],

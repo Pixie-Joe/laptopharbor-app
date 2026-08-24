@@ -4,9 +4,7 @@ import 'package:laptopharbor/screens/cart_screen.dart';
 import '../backend/models/notification.dart' as model_notif;
 import 'notifications_screen.dart';
 import '../backend/models/product.dart';
-import '../backend/storage/cart_manager.dart';
 import 'checkout_screen.dart' hide cartManager;
-import 'wishlist_screen.dart';
 import '../backend/storage/wishlist_manager.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -171,7 +169,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 20,
                   ),
                 ],
@@ -241,15 +239,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         onPressed: () {
                           cartManager.clearCart();
                           cartManager.addToCart(product);
-
-                          final notification = model_notif.AppNotification(
-                            icon: Icons.shopping_cart_outlined,
-                            iconColor: Colors.white,
-                            iconBg: const Color(0xFF00B4D8),
-                            title: 'Proceeding to checkout!',
-                            subtitle: '${product.name} is ready to order.',
-                            time: 'Just now',
-                          );
 
                           // Navigate directly to CheckoutScreen
                           Navigator.push(
