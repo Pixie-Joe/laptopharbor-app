@@ -8,6 +8,7 @@ import 'notifications_screen.dart';
 import '../backend/models/notification.dart' as model_notif;
 import '../backend/db/db_helper.dart';
 import '../backend/services/payment_service.dart';
+import 'package:uuid/uuid.dart';
 
 final cartManager = CartManager();
 
@@ -84,7 +85,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   // Attempts to charge via the local Stripe backend and present the native PaymentSheet.
   // Returns true when the payment completed successfully. Returns false when Stripe is
   // not configured or when an error occurred - the caller should fall back to the stub.
-  Future<bool> _processStripePayment(double amount) async {
+  Future<bool> _processStripePayment(double amount, int orderId) async {
     try {
       final publishableKey = Stripe.publishableKey;
       if (publishableKey.isEmpty) {
@@ -96,11 +97,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       // Example: flutter run --dart-define=API_BASE_URL=http://10.0.2.2:4242
       final url = Uri.parse('${AppConfig.apiBase}/create-payment-intent');
 
-      // Backend expects amount in cents
+      // Generate idempotency key per payment attempt and include the order id
+      final idKey = const Uuid().v4();
+
+      // Backend expects amount in cents. Include order_id for reconciliation.
       final resp = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'amount': (amount * 100).toInt(), 'currency': 'usd'}),
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': idKey,
+        },
+        body: jsonEncode({'amount': (amount * 100).toInt(), 'currency': 'usd', 'order_id': orderId}),
       );
 
       if (resp.statusCode != 200) {
@@ -226,10 +233,31 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         final messenger = ScaffoldMessenger.maybeOf(context);
                         final navigator = Navigator.of(context);
 
+                        // Create a pending order in DB before attempting payment so we can
+                        // reconcile server-side payment intents to this order via order_id.
+                        int orderId = -1;
+                        try {
+                          final db = await DBHelper().db;
+                          final now = DateTime.now().toIso8601String();
+                          orderId = await db.insert('orders', {
+                            'user_id': 0,
+                            'total_amount': total,
+                            'shipping_address': updatedAddress,
+                            'status': 'pending',
+                            'created_at': now,
+                          });
+                        } catch (e) {
+                          debugPrint('Error creating pending order: $e');
+                          messenger?.showSnackBar(
+                            const SnackBar(content: Text('Failed to create order. Please try again.')),
+                          );
+                          return;
+                        }
+
                         // First try the Stripe-native flow if configured.
                         bool stripeSuccess = false;
                         try {
-                          stripeSuccess = await _processStripePayment(total);
+                          stripeSuccess = await _processStripePayment(total, orderId);
                         } catch (e) {
                           debugPrint('Stripe flow error: $e');
                           stripeSuccess = false;
@@ -241,6 +269,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               .processPayment(amount: total, method: updatedPayment);
 
                           if (!paymentResult.success) {
+                            // mark order failed
+                            try {
+                              final db = await DBHelper().db;
+                              await db.update('orders', {'status': 'failed'}, where: 'id = ?', whereArgs: [orderId]);
+                            } catch (_) {}
+
                             messenger?.showSnackBar(
                               SnackBar(
                                 content: Text('Payment failed: ${paymentResult.message}'),
@@ -251,19 +285,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           }
                         }
 
-                        // Persist order to DB
+                        // Payment succeeded (either Stripe or fallback). Persist order items and mark placed.
                         try {
                           final db = await DBHelper().db;
-                          final now = DateTime.now().toIso8601String();
-                          final orderId = await db.insert('orders', {
-                            'user_id': 0,
-                            'total_amount': total,
-                            'shipping_address': updatedAddress,
-                            'status': 'placed',
-                            'created_at': now,
-                          });
-
-                          // Insert order_items
                           for (var item in cartItems) {
                             await db.insert('order_items', {
                               'order_id': orderId,
@@ -272,8 +296,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               'price': item.product.price,
                             });
                           }
+
+                          await db.update('orders', {'status': 'placed'}, where: 'id = ?', whereArgs: [orderId]);
                         } catch (e) {
-                          debugPrint('Error persisting order: $e');
+                          debugPrint('Error persisting order items: $e');
                         }
 
                         // Create the notification

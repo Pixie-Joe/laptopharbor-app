@@ -19,13 +19,18 @@ Security:
 const express = require('express');
 const Stripe = require('stripe');
 const cors = require('cors');
+const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+// Use JSON parser for all routes except the Stripe webhook which requires the raw body for signature verification.
+app.use((req, res, next) => {
+  if (req.originalUrl && req.originalUrl.startsWith('/webhook')) return next();
+  return bodyParser.json()(req, res, next);
+});
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY;
 let stripe = null;
@@ -73,19 +78,23 @@ async function createPaymentIntent({ amount, currency = 'usd' }, options = {}) {
   let intent;
   if (useStripe && stripe) {
     // If using Stripe, pass idempotencyKey in the second arg to the SDK when present
-    if (idempotencyKey) {
-      intent = await stripe.paymentIntents.create({
-        amount: Math.round(amount),
-        currency,
-        metadata: { integration_check: 'accept_a_payment' },
-      }, { idempotencyKey });
-    } else {
-      intent = await stripe.paymentIntents.create({
-        amount: Math.round(amount),
-        currency,
-        metadata: { integration_check: 'accept_a_payment' },
-      });
-    }
+  // Also attach the order_id in metadata if provided so webhooks can reconcile
+  const metadata = { integration_check: 'accept_a_payment' };
+  if (options.orderId) metadata.order_id = String(options.orderId);
+
+  if (idempotencyKey) {
+    intent = await stripe.paymentIntents.create({
+      amount: Math.round(amount),
+      currency,
+      metadata,
+    }, { idempotencyKey });
+  } else {
+    intent = await stripe.paymentIntents.create({
+      amount: Math.round(amount),
+      currency,
+      metadata,
+    });
+  }
   } else {
     // Stubbed response for local development when Stripe secret is not available.
     intent = {
@@ -132,6 +141,62 @@ app.post('/create-payment-intent', async (req, res) => {
   }
 });
 
+// Helper to reconcile a payment intent and mark the corresponding idempotency entry / order as paid
+function reconcilePaymentIntent(paymentIntent) {
+  try {
+    const pid = paymentIntent.id || paymentIntent.payment_intent || null;
+    const status = paymentIntent.status || null;
+    const metadata = paymentIntent.metadata || {};
+    const orderIdFromMetadata = metadata.order_id || null;
+
+    const store = _readIdempotencyStore();
+    let updated = false;
+
+    // Try to find by idempotency entries matching the intent id
+    for (const key of Object.keys(store)) {
+      const entry = store[key];
+      const intentObj = entry.intent || {};
+      // Some SDK responses use 'id', some use 'payment_intent' shapes; check common fields
+      const intentId = intentObj.id || intentObj.payment_intent || null;
+      if (pid && intentId && pid === intentId) {
+        entry.paid = true;
+        entry.paid_at = new Date().toISOString();
+        entry.payment_intent = { id: pid, status };
+        if (!entry.order_id && orderIdFromMetadata) entry.order_id = orderIdFromMetadata;
+        store[key] = entry;
+        updated = true;
+        console.log(`Reconciled payment_intent ${pid} -> idempotency key ${key}`);
+        break;
+      }
+      // If order_id is set on the stored entry, match by that as a fallback
+      if (orderIdFromMetadata && entry.order_id && String(entry.order_id) === String(orderIdFromMetadata)) {
+        entry.paid = true;
+        entry.paid_at = new Date().toISOString();
+        entry.payment_intent = { id: pid, status };
+        store[key] = entry;
+        updated = true;
+        console.log(`Reconciled payment_intent ${pid} -> order_id ${orderIdFromMetadata}`);
+        break;
+      }
+    }
+
+    if (updated) {
+      _writeIdempotencyStore(store);
+    } else {
+      console.warn('Could not find idempotency entry for payment_intent', pid, '— storing a loose record');
+      // As a fallback, create a loose record keyed by payment intent id so backfills can find it
+      const looseKey = `intent_${pid}`;
+      store[looseKey] = store[looseKey] || {};
+      store[looseKey].payment_intent = { id: pid, status };
+      store[looseKey].created_at = store[looseKey].created_at || new Date().toISOString();
+      if (orderIdFromMetadata) store[looseKey].order_id = orderIdFromMetadata;
+      _writeIdempotencyStore(store);
+    }
+  } catch (e) {
+    console.error('Error in reconcilePaymentIntent:', e);
+  }
+}
+
 // Optional webhook endpoint. When STRIPE_WEBHOOK_SECRET is set, verify signatures.
 app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -139,13 +204,28 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
   if (!webhookSecret) {
     // If no webhook secret provided, attempt to parse and log event body for development.
     try {
-      const event = JSON.parse(req.body.toString());
-      console.log('Webhook received (unverified):', event.type);
+      // If express.json has already parsed the body, req.body will be an object.
+      let event;
+      if (Buffer.isBuffer(req.body)) {
+        event = JSON.parse(req.body.toString());
+      } else {
+        event = req.body;
+      }
+      console.log('Webhook received (unverified):', event && event.type);
+      // For development, process payment_intent.succeeded events as if verified so local dev can reconcile orders
+      try {
+        if (event && event.type === 'payment_intent.succeeded') {
+          const paymentIntent = event.data && event.data.object ? event.data.object : {};
+          reconcilePaymentIntent(paymentIntent);
+        }
+      } catch (e) {
+        console.error('Error handling unverified webhook event:', e);
+      }
       // Respond with 200 so Stripe treats it as received in test setups.
       return res.json({ received: true });
     } catch (err) {
       console.error('Webhook parse error:', err);
-      return res.status(400).send(`Webhook error: ${err.message}`);
+      return res.status(400).send(`Webhook error: ${err && err.message ? err.message : String(err)}`);
     }
   }
 
@@ -165,7 +245,16 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
   }
 
   console.log('Webhook verified event:', event.type);
-  // Optionally handle events here (payment_intent.succeeded, charge.failed, etc.)
+
+  // Handle relevant events
+  try {
+    if (event.type === 'payment_intent.succeeded') {
+      const paymentIntent = event.data.object || {};
+      reconcilePaymentIntent(paymentIntent);
+    }
+  } catch (e) {
+    console.error('Error processing webhook event:', e);
+  }
 
   res.json({ received: true });
 });
