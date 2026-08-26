@@ -31,7 +31,10 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 
 Future<PaymentResult> processStripePayment(double amount) async {
   // 1. Ask your backend to create a PaymentIntent
-  final resp = await http.post(Uri.parse('http://10.0.2.2:4242/create-payment-intent'),
+  // The client reads API_BASE_URL from a dart-define at startup. Use:
+  // flutter run --dart-define=API_BASE_URL=http://10.0.2.2:4242
+  final resp = await http.post(Uri.parse('
+    String.fromEnvironment('API_BASE_URL', defaultValue: 'http://10.0.2.2:4242') + '/create-payment-intent'),
       headers: {'Content-Type': 'application/json'}, body: jsonEncode({'amount': amount, 'currency': 'usd'}));
 
   if (resp.statusCode != 200) {

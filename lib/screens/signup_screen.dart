@@ -144,8 +144,10 @@ void _handleSignUp() async {
 
     UserManager().login(user);
 
+    if (!mounted) return;
     _showAccountCreatedDialog(context);
   } else {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('Registration failed. Email may already exist'),

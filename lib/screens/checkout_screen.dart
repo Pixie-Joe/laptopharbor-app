@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../config/app_config.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_stripe/flutter_stripe.dart';
 import '../backend/storage/cart_manager.dart';
@@ -92,8 +92,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         return false;
       }
 
+      // Read API base URL from compile-time define so it's easy to override for emulators:
+      // Example: flutter run --dart-define=API_BASE_URL=http://10.0.2.2:4242
+      final url = Uri.parse('${AppConfig.apiBase}/create-payment-intent');
+
       // Backend expects amount in cents
-      final url = Uri.parse('http://10.0.2.2:4242/create-payment-intent');
       final resp = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -220,6 +223,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () async {
+                        final messenger = ScaffoldMessenger.maybeOf(context);
+                        final navigator = Navigator.of(context);
+
                         // First try the Stripe-native flow if configured.
                         bool stripeSuccess = false;
                         try {
@@ -235,10 +241,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               .processPayment(amount: total, method: updatedPayment);
 
                           if (!paymentResult.success) {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text('Payment failed: ${paymentResult.message}'),
-                              backgroundColor: Colors.red.shade400,
-                            ));
+                            messenger?.showSnackBar(
+                              SnackBar(
+                                content: Text('Payment failed: ${paymentResult.message}'),
+                                backgroundColor: Colors.red.shade400,
+                              ),
+                            );
                             return;
                           }
                         }
@@ -283,9 +291,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         // Clear the cart
                         await CartManager().clearCart();
 
-                        // Navigate to NotificationsScreen
-                        Navigator.pushReplacement(
-                          context,
+                        navigator.pushReplacement(
                           MaterialPageRoute(
                             builder: (context) => NotificationsScreen(
                               notifications: notifications,

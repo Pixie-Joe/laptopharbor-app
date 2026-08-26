@@ -69,6 +69,7 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
 
     await AppDatabase.instance.updateAddress(updatedAddress);
 
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Address updated successfully!'),
@@ -107,18 +108,14 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
                 children: [
                   // Label Selection
                   _buildLabelField("Label (Home, Office)"),
-                  Row(
+                  Wrap(
+                    spacing: 12,
                     children: ['Home', 'Office'].map((label) {
-                      return Expanded(
-                        child: RadioListTile<String>(
-                          title: Text(label),
-                          value: label,
-                          groupValue: selectedLabel,
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          onChanged: (value) =>
-                              setState(() => selectedLabel = value!),
-                        ),
+                      final isSelected = selectedLabel == label;
+                      return ChoiceChip(
+                        label: Text(label),
+                        selected: isSelected,
+                        onSelected: (_) => setState(() => selectedLabel = label),
                       );
                     }).toList(),
                   ),

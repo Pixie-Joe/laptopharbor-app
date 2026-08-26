@@ -1,21 +1,71 @@
 import 'dart:convert';
 import 'dart:math';
+
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
+
 import '../db/db_helper.dart';
 
 class UserService {
   final DBHelper _dbHelper = DBHelper();
 
+  static const int _pbkdf2Iterations = 100000;
+  static const int _pbkdf2KeyLength = 32;
+
+  static String _generateSalt() {
+    final saltBytes = List<int>.generate(16, (_) => Random.secure().nextInt(256));
+    return base64UrlEncode(saltBytes);
+  }
+
+  static List<int> _xorBytes(List<int> a, List<int> b) {
+    final out = <int>[];
+    for (var i = 0; i < a.length; i++) {
+      out.add(a[i] ^ b[i]);
+    }
+    return out;
+  }
+
+  static List<int> _intToBytesBigEndian(int value) {
+    final buffer = Uint8List(4);
+    buffer[0] = (value >> 24) & 0xff;
+    buffer[1] = (value >> 16) & 0xff;
+    buffer[2] = (value >> 8) & 0xff;
+    buffer[3] = value & 0xff;
+    return buffer;
+  }
+
+  static String _hashPassword(String password, String salt) {
+    final passwordBytes = utf8.encode(password);
+    final saltBytes = utf8.encode(salt);
+    final mac = Hmac(sha256, passwordBytes);
+    final output = <int>[];
+
+    for (var blockIndex = 1; output.length < _pbkdf2KeyLength; blockIndex++) {
+      var u = <int>[...saltBytes, ..._intToBytesBigEndian(blockIndex)];
+      var t = <int>[];
+
+      for (var i = 0; i < _pbkdf2Iterations; i++) {
+        u = mac.convert(u).bytes;
+        if (i == 0) {
+          t = List<int>.from(u);
+        } else {
+          t = _xorBytes(t, u);
+        }
+      }
+
+      output.addAll(t);
+    }
+
+    return base64UrlEncode(output.sublist(0, _pbkdf2KeyLength));
+  }
+
   /// Register user — columns MUST match your DB schema exactly.
   Future<bool> registerUser(String name, String email, String password) async {
     try {
-      final Database db = await _dbHelper.db; // your getter is named `db`
-
+      final Database db = await _dbHelper.db;
       final normalizedEmail = email.trim().toLowerCase();
 
-      // Check if email already exists
       final existing = await db.query(
         'users',
         where: 'email = ?',
@@ -23,16 +73,12 @@ class UserService {
       );
 
       if (existing.isNotEmpty) {
-        // email already present
         return false;
       }
 
-      // Generate a random salt and compute a SHA-256(salt + password)
-      final saltBytes = List<int>.generate(16, (_) => Random.secure().nextInt(256));
-      final salt = base64UrlEncode(saltBytes);
-      final hash = sha256.convert(utf8.encode(salt + password)).toString();
+      final salt = _generateSalt();
+      final hash = _hashPassword(password, salt);
 
-      // Insert using exact column names from your DB schema
       final id = await db.insert(
         'users',
         {
@@ -60,7 +106,6 @@ class UserService {
       final Database db = await _dbHelper.db;
       final normalizedEmail = email.trim().toLowerCase();
 
-      // Fetch user by email
       final rows = await db.query(
         'users',
         where: 'email = ?',
@@ -75,10 +120,9 @@ class UserService {
       final storedHash = userRow['password_hash'] as String?;
       if (storedSalt == null || storedHash == null) return null;
 
-      final attemptHash = sha256.convert(utf8.encode(storedSalt + password)).toString();
+      final attemptHash = _hashPassword(password, storedSalt);
       if (attemptHash != storedHash) return null;
 
-      // Create a session token valid for 7 days
       final tokenBytes = List<int>.generate(32, (_) => Random.secure().nextInt(256));
       final token = base64UrlEncode(tokenBytes);
       final now = DateTime.now();
@@ -91,7 +135,6 @@ class UserService {
         'created_at': now.toIso8601String(),
       });
 
-      // Return user data plus token
       final result = Map<String, dynamic>.from(userRow);
       result['session_token'] = token;
       result['session_expires_at'] = expires.toIso8601String();
@@ -169,10 +212,8 @@ class UserService {
       final expiry = DateTime.parse(expiryStr);
       if (DateTime.now().isAfter(expiry)) return false;
 
-      // Compute new salt+hash
-      final saltBytes = List<int>.generate(16, (_) => Random.secure().nextInt(256));
-      final salt = base64UrlEncode(saltBytes);
-      final hash = sha256.convert(utf8.encode(salt + newPassword)).toString();
+      final salt = _generateSalt();
+      final hash = _hashPassword(newPassword, salt);
 
       await db.update('users', {
         'password_hash': hash,

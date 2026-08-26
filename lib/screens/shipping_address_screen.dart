@@ -33,6 +33,7 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
   Future<void> _deleteAddress(int id) async {
     await AppDatabase.instance.deleteAddress(id);
     await _loadAddresses();
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Address deleted')),
     );

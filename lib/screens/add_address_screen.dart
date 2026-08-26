@@ -97,7 +97,8 @@ Future<void> _saveAddress() async {
     await AppDatabase.instance.insertAddress(newAddress);
   }
 
-  Navigator.pop(context, true); // <- important to reload the list
+if (!mounted) return;
+Navigator.pop(context, true); // <- important to reload the list
 }
 
   @override
@@ -128,18 +129,14 @@ Future<void> _saveAddress() async {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildLabelField("Label (Home, Office)"),
-                  Row(
+                  Wrap(
+                    spacing: 12,
                     children: ['Home', 'Office'].map((label) {
-                      return Expanded(
-                        child: RadioListTile<String>(
-                          title: Text(label),
-                          value: label,
-                          groupValue: selectedLabel,
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          onChanged: (value) =>
-                              setState(() => selectedLabel = value!),
-                        ),
+                      final isSelected = selectedLabel == label;
+                      return ChoiceChip(
+                        label: Text(label),
+                        selected: isSelected,
+                        onSelected: (_) => setState(() => selectedLabel = label),
                       );
                     }).toList(),
                   ),
