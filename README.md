@@ -65,13 +65,14 @@ The project includes a local backend server for payment intent creation.
    npm install
    ```
 
-3. Copy the sample env file and add your test secret key
+3. Copy the sample env file and add your test secret key (optional)
    ```bash
    copy .env.example .env
    ```
-   Then edit `.env` and set:
+   Then edit `.env` and set if you have them:
    ```env
-   STRIPE_SECRET_KEY=sk_test_your_key_here
+   STRIPE_SECRET_KEY=sk_test_your_key_here    # optional for local stub mode
+   STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret  # optional for verified webhooks
    PORT=4242
    ```
 
@@ -82,10 +83,51 @@ The project includes a local backend server for payment intent creation.
 
 5. Run the Flutter app using the corresponding publishable key
    ```bash
-   flutter run --dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_your_key_here
+   flutter run --dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_your_key_here --dart-define=API_BASE_URL=http://10.0.2.2:4242
    ```
 
-The app calls the local server at `http://10.0.2.2:4242/create-payment-intent` on Android emulators, and `http://localhost:4242/create-payment-intent` on a local web or iOS simulator setup.
+Network notes
+
+- Android emulator: use `10.0.2.2` to reach the host machine (e.g., `http://10.0.2.2:4242`).
+- iOS simulator / local web: use `http://localhost:4242`.
+
+Webhook & verification (important)
+
+- For local development the server supports two modes:
+  - Unverified (stub) mode: leave `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` unset. The server will return a stubbed PaymentIntent and will accept unverified webhook JSON POSTs for local testing and smoke tests.
+  - Verified (Stripe) mode: set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`. In this mode the server must verify webhook signatures using Stripe's `stripe-signature` header.
+
+- Technical detail: webhook signature verification requires the server to receive the raw HTTP body (a Buffer). The server now uses a route-specific approach: JSON parsing is applied to all routes except `/webhook`, which receives the raw body so `stripe.webhooks.constructEvent` can verify signatures. This means:
+  - Do NOT add global body-parsing middleware that consumes the request body before `/webhook` when deploying a verified server.
+  - When testing locally with `STRIPE_WEBHOOK_SECRET` set, use a tunneling tool (ngrok or similar) so Stripe can reach your dev server, or use Stripe CLI to forward webhooks.
+
+Running smoke tests (local)
+
+- A simple smoke test has been added to validate create-intent + webhook reconciliation. To run it locally:
+  1. Start the server (no secrets required to run the stub):
+     ```bash
+     npm start
+     ```
+  2. In another terminal run:
+     ```bash
+     node smoke-test-webhook.js
+     ```
+  The script will create an intent, post a simulated `payment_intent.succeeded` webhook, and verify the server's idempotency store was updated to mark the order as paid.
+
+Notes about production hardening
+
+- The file-backed `idempotency.json` store is intended only for local dev and smoke tests. For production, replace it with a durable datastore (SQLite, Postgres, etc.) and add TTL/cleanup policies.
+- Move authentication to a server-side flow and use secure server-issued tokens (JWT with refresh or server session) in production.
+
+Recent change (what was just committed)
+
+- Commit: d5a1702 — "backend-server: handle webhook raw body and reconcile payment intents"
+  - Attach `order_id` to PaymentIntent metadata so webhooks can reconcile orders.
+  - Add `reconcilePaymentIntent` helper to mark idempotency entries as paid on `payment_intent.succeeded`.
+  - Use route-specific raw parsing for `/webhook` to allow signature verification while keeping JSON parsing for other routes.
+  - Add `smoke-test-webhook.js` to validate create-intent + webhook reconciliation.
+
+If you want these README changes modified (formatting, additional CI run examples, or a dedicated `backend-server/README.md`), say so and I'll update accordingly.
 
 ## How to use the app
 
