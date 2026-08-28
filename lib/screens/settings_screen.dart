@@ -42,7 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: Switch(
               value: pushNotifications,
               onChanged: (value) => setState(() => pushNotifications = value),
-              activeColor: const Color(0xFF00B4D8),
+              activeThumbColor: const Color(0xFF00B4D8),
             ),
           ),
           SettingsTile(
@@ -52,7 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: Switch(
               value: emailNotifications,
               onChanged: (value) => setState(() => emailNotifications = value),
-              activeColor: const Color(0xFF00B4D8),
+              activeThumbColor: const Color(0xFF00B4D8),
             ),
           ),
 

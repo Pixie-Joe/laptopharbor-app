@@ -1,7 +1,5 @@
 // screens/home_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'dart:convert';
 import 'product_detail_screen.dart';
 import 'all_products_screen.dart';
 import 'notifications_screen.dart';
@@ -14,7 +12,7 @@ import '../backend/storage/session_manager.dart';
 import '../backend/models/product.dart';
 import 'dart:io';
 import '../backend/storage/user_manager.dart';
-import '../backend/models/user.dart';
+import '../backend/services/product_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,7 +28,6 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Product> _allProducts = [];
   List<Product> _displayedProducts = [];
   bool _isLoading = true;
-  Map<String, dynamic> _activeFilters = {};
 
   @override
   void initState() {
@@ -48,48 +45,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadProducts() async {
     try {
-      final String response = await rootBundle.loadString(
-        'assets/products.json',
-      );
-      final data = json.decode(response) as Map<String, dynamic>;
-      final Map<String, dynamic> filters =
-          data['filters'] as Map<String, dynamic>;
+      final productService = ProductService();
+      List<Product> productsList = await productService.getAllProducts();
 
-      List<Product> productsList = [];
-      int idCounter = 1;
-
-      filters.forEach((category, brandsMap) {
-        final Map<String, dynamic> brands = brandsMap as Map<String, dynamic>;
-
-        brands.forEach((brand, products) {
-          final List<dynamic> productList = products as List<dynamic>;
-
-          for (var productJson in productList) {
-            final Map<String, dynamic> json =
-                productJson as Map<String, dynamic>;
-
-            final String laptopName = (json['name'] as String).trim();
-            final String imageFileName = json['image'] as String;
-
-            productsList.add(
-              Product(
-                id: idCounter++,
-                name: laptopName,
-                brand: brand,
-                category: category,
-                price: (json['price'] as num).toDouble(),
-                originalPrice:
-                    (json['originalPrice'] as num?)?.toDouble() ??
-                    (json['price'] as num).toDouble(),
-                discount: (json['discount'] as String?) ?? '',
-                specs: List<String>.from(json['specs'] ?? []),
-                image: imageFileName,
-                description: (json['description'] as String?) ?? '',
-              ),
-            );
-          }
-        });
-      });
+      // If DB is empty, seed from assets then reload
+      if (productsList.isEmpty) {
+        await productService.seedProductsFromAssets();
+        productsList = await productService.getAllProducts();
+      }
 
       setState(() {
         _allProducts = productsList;
@@ -97,14 +60,13 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading products: $e');
+      debugPrint('Error loading products from DB: $e');
       setState(() => _isLoading = false);
     }
   }
 
   void _applyFilters(Map<String, dynamic> filters) {
     setState(() {
-      _activeFilters = filters;
       _displayedProducts = _allProducts
           .where((product) {
             // Filter by category
@@ -147,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showFilterModal() {
-    print('Filter button tapped!'); // Debug line
+    debugPrint('Filter button tapped!');
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

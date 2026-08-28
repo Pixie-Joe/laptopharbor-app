@@ -7,6 +7,8 @@ import '../backend/services/user_service.dart';
 import '../backend/storage/session_manager.dart';
 import '../backend/models/user.dart';
 import '../backend/storage/user_manager.dart';
+import '../backend/storage/cart_manager.dart';
+import '../backend/storage/wishlist_manager.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -50,16 +52,34 @@ void _handleSignIn() async {
       email: userData['email'] ?? email,
     );
 
-    UserManager().login(user);
+    // Persist client session token if provided
+    final token = userData['session_token'] as String?;
+    final userId = userData['id'] is int ? userData['id'] as int : int.tryParse('${userData['id']}');
 
-    await SessionManager.clearSession();
+    if (token != null) {
+      await SessionManager.clearSession();
+      await SessionManager.saveSessionToken(token);
+    }
+
+    // Log in user in-memory
+    UserManager().login(user);
     await SessionManager.saveUserName(user.name);
+
+    // Migrate guest cart and wishlist into this user account (if we have an id)
+    if (userId != null) {
+      await CartManager().migrateGuestToUser(userId);
+      await WishlistManager().migrateGuestToUser(userId);
+    }
+
+    if (!mounted) return;
 
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const HomeScreen()),
     );
   } else {
+    if (!mounted) return;
+
     // LOGIN FAILED
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

@@ -19,10 +19,11 @@ class UserManager {
 
   void updateUser(User updatedUser) {
     if (currentUser.value != null) {
-      currentUser.value!.name = updatedUser.name;
-      currentUser.value!.email = updatedUser.email;
-      currentUser.value!.profileImage = updatedUser.profileImage;
-      currentUser.notifyListeners();
+      currentUser.value = User(
+        name: updatedUser.name,
+        email: updatedUser.email,
+        profileImage: updatedUser.profileImage,
+      );
     } else {
       currentUser.value = updatedUser;
     }

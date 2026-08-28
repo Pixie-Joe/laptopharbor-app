@@ -44,6 +44,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         profileImagePath = pickedFile.path;
       });
     }
+    if (!mounted) return;
     Navigator.pop(context); // close bottom sheet
   }
 
@@ -92,6 +93,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     // Update UserManager, which notifies listeners for all screens
     UserManager().updateUser(updatedUser);
 
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Profile saved successfully!')),
     );

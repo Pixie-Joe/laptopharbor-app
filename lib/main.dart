@@ -1,8 +1,23 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'screens/welcome_screen.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
+import 'config/app_config.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Configure Stripe publishable key at runtime. Do NOT commit secret keys.
+  // For local testing you can pass --dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_...
+  final publishableKey = AppConfig.stripePublishableKey;
+  if (publishableKey.isNotEmpty) {
+    Stripe.publishableKey = publishableKey;
+    await Stripe.instance.applySettings();
+  } else {
+    // No publishable key provided — payments will fall back to the existing stub.
+    // This is intentional for safety in CI / test environments.
+  }
+
   runApp(const MyApp());
 }
 

@@ -33,6 +33,7 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
   Future<void> _deleteAddress(int id) async {
     await AppDatabase.instance.deleteAddress(id);
     await _loadAddresses();
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Address deleted')),
     );
@@ -113,7 +114,7 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF00B4D8).withOpacity(0.2),
+                                color: const Color(0xFF00B4D8).withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: const Text(

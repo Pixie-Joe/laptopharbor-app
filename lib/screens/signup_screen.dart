@@ -46,7 +46,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF00B4D8).withOpacity(0.1),
+                    color: const Color(0xFF00B4D8).withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -144,8 +144,10 @@ void _handleSignUp() async {
 
     UserManager().login(user);
 
+    if (!mounted) return;
     _showAccountCreatedDialog(context);
   } else {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('Registration failed. Email may already exist'),

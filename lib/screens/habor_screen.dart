@@ -91,14 +91,19 @@ class _HaborScreenState extends State<HaborScreen> {
     final maxPrice = _priceRange.end;
 
     final filtered = _allProducts.where((p) {
-      if (_selectedCategory != null && p.category != _selectedCategory)
+      if (_selectedCategory != null && p.category != _selectedCategory) {
         return false;
-      if (_selectedBrands.isNotEmpty && !_selectedBrands.contains(p.brand))
+      }
+      if (_selectedBrands.isNotEmpty && !_selectedBrands.contains(p.brand)) {
         return false;
-      if (p.price < minPrice || p.price > maxPrice) return false;
+      }
+      if (p.price < minPrice || p.price > maxPrice) {
+        return false;
+      }
       if (_selectedSpecs.isNotEmpty &&
-          !_selectedSpecs.every((s) => p.specs.contains(s)))
+          !_selectedSpecs.every((s) => p.specs.contains(s))) {
         return false;
+      }
       return true;
     }).toList();
 
@@ -344,7 +349,7 @@ class _HaborScreenState extends State<HaborScreen> {
                           _selectedCategory = sel ? cat : null;
                         }),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
 
@@ -371,10 +376,11 @@ class _HaborScreenState extends State<HaborScreen> {
                               selected: selected,
                               onSelected: (v) {
                                 setState(() {
-                                  if (v)
+                                  if (v) {
                                     _selectedBrands.add(b);
-                                  else
+                                  } else {
                                     _selectedBrands.remove(b);
+                                  }
                                 });
                               },
                             );
@@ -421,10 +427,11 @@ class _HaborScreenState extends State<HaborScreen> {
                               selected: selected,
                               onSelected: (v) {
                                 setState(() {
-                                  if (v)
+                                  if (v) {
                                     _selectedSpecs.add(s);
-                                  else
+                                  } else {
                                     _selectedSpecs.remove(s);
+                                  }
                                 });
                               },
                             );
